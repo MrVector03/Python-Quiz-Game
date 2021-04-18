@@ -94,10 +94,12 @@ def display_quiz_developer_tool():
 
 def quiz_display():
     cursor.execute("SELECT * FROM Accounts WHERE is_logged = 1")
+    ph_name = ""
     for info in cursor:
         print("Logged in as:", info[1], "(ID:", str(info[0]) + ")")
+        ph_name = info[1]
 
-    cursor.execute("SELECT * FROM Quiz WHERE created_by = %s", (username, ))
+    cursor.execute("SELECT * FROM Quiz WHERE created_by = %s", (ph_name, ))
     quiz_list = [i for i in cursor]
     print(quiz_list)
     q_count = 1
@@ -277,6 +279,7 @@ def main_quiz():
     total_score = 0
     right_answers = 0
     wrong_answers = 0
+    print("Use capital letters in order to choose your answer")
     for i in range(5):
         scoring = 100
         while True:
@@ -293,15 +296,15 @@ def main_quiz():
                     answers.append(ans)
                     ans = ""
             answers.append(ans)
-            print("Use capital letters in order to choose your answer")
             print("A. " + answers[0] + "\nB. " + answers[1] + "\nC. " + answers[2] + "\nD. " + answers[3])
             answering_format = {}
+
             for k in range(4):
                 letters = ["A", "B", "C", "D"]
                 answering_format[letters[k]] = answers[k]
             while True:
                 user_answer = input("Your answer: ")
-                if answering_format[user_answer] == answers[4]:
+                if answering_format[user_answer.upper()] == answers[4]:
                     total_score += scoring
                     right_answers += 1
                     print("\nCorrect!")
@@ -352,50 +355,49 @@ def main_quiz():
         cursor.execute("UPDATE Quiz SET rating = %s WHERE q_ID = %s", (rate, chosen_one[0][0]))
         db.commit()
     elif quiz[0][5] > 0:
-        rate = (rate + quiz[0][5]) / 2
+        rate = (float(rate) + float(quiz[0][5])) / 2
         cursor.execute("UPDATE Quiz SET rating = %s WHERE q_ID = %s", (rate, chosen_one[0][0]))
         db.commit()
     cursor.execute("UPDATE Quiz SET t_comp = %s WHERE q_ID = %s", (quiz[0][6] + 1, chosen_one[0][0]))
     db.commit()
     print("\nAccount stats updated.")
     print("\nProcess finished!")
+    cursor.execute("SELECT * FROM Accounts WHERE username = %s", ("Viktor Milojevic", ))
+    for i in cursor:
+        print(i)
 
 
 while True:
     print("1. Login\n2. Exit\n")
-    while True:
-        q = input("Query >>> ")
-        temp_id = 0
-        if int(q) == 1 or q == 'login':
-            while True:
-                username_login = input("\nUsername: ")
-                cursor.execute("SELECT ID, username, password FROM Accounts WHERE username = %s", (username_login,))
-                temporary_list = [i for i in cursor]
-                id_for_account = temporary_list[0][0]
-                temp_id = id_for_account
-                if username_login == temporary_list[0][1]:
-                    break
-                else:
-                    print("There was an error finding your account, please try again.")
-                    print("If you don't have one, create an account.")
-
-            while True:
-                password_login = input("Password: ")
-                if password_login == temporary_list[0][2]:
-                    print("\nSuccessfully logged in!")
-                    break
-                else:
-                    print("\nIncorrect password,\nplease try again.")
-                    pass
-            cursor.execute("UPDATE Accounts SET is_logged = 1 WHERE is_logged = 0 AND ID = %s", (temp_id,))
-            db.commit()
-
-            cursor.execute("SELECT * FROM Accounts")
-            for i in cursor:
-                print(i)
-
-            print("Logged account ID =", id_for_account)
-
+    q = input("Query >>> ")
+    temp_id = 0
+    if str(q).lower() == 'login':
+        while True:
+            username_login = input("\nUsername: ")
+            cursor.execute("SELECT ID, username, password FROM Accounts WHERE username = %s", (username_login,))
+            temporary_list = [i for i in cursor]
+            id_for_account = temporary_list[0][0]
+            temp_id = id_for_account
+            if username_login == temporary_list[0][1]:
+                break
+            else:
+                print("There was an error finding your account, please try again.")
+                print("If you don't have one, create an account.")
+        while True:
+            password_login = input("Password: ")
+            if password_login == temporary_list[0][2]:
+                print("\nSuccessfully logged in!")
+                break
+            else:
+                print("\nIncorrect password,\nplease try again.")
+                pass
+        cursor.execute("UPDATE Accounts SET is_logged = 1 WHERE is_logged = 0 AND ID = %s", (temp_id,))
+        db.commit()
+        cursor.execute("SELECT * FROM Accounts")
+        for i in cursor:
+            print(i)
+        print("Logged account ID =", id_for_account)
+        while True:
             print("\nOptions:")
             print("\n- Create account ('create account')")
             print("- Play a quiz ('play')")
@@ -403,13 +405,11 @@ while True:
             print("- Create questions ('create questions')")
             print("- Create answers ('create answers')")
             print("- Logout ('logout')")
-
             print("\n- Display account ('display account')")
             print("- Display quiz ('display quiz')")
             print("- Display questions ('display questions')")
-
             print("- Exit the program ('quit', 'exit')")
-            query = input("\nQuery >>> ")
+            query = input("\nQuery >> ")
             if query == "create_account" or query == "create account":
                 create_account()
             elif query == "display_account" or query == "display account":
@@ -432,8 +432,8 @@ while True:
                 cursor.execute("SELECT * FROM Accounts")
                 for i in cursor:
                     print(i)
+                print("Successfully logged out")
                 break
-
-        elif q == "quit" or q == "exit":
-            print("\nThank you for playing!")
-            break
+    elif str(q) == "quit" or str(q) == "exit":
+        print("\nThank you for playing!")
+        break
