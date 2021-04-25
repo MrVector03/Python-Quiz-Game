@@ -58,8 +58,12 @@ def create_account():  # creates account and puts it into the database
 
 
 def display_account():
-    username = input("Username: ")
-    cursor.execute("SELECT * FROM Accounts WHERE username = %s", (username, ))
+    cursor.execute("SELECT * FROM Accounts WHERE is_logged = 1")
+    account_id = 0
+    for info in cursor:
+        account_id = info[0]
+
+    cursor.execute("SELECT * FROM Accounts WHERE ID = %s", (account_id, ))
     for account in cursor:
         print(account)
 
@@ -371,25 +375,122 @@ just for development and bug fix purposes only.
 
 def manual():
     while True:
-        print("- Change quiz name, question bool, answer bool ('alter ...')")
+        print("\n- Change quiz name, questions bool, answers bool ('alter ...')")
 
         decision = input("Manual mode >>> ")
-        if decision == 'alter quiz name':
+
+        if decision == 'alter quiz name':  # q_name
             while True:
                 quiz_id = input("Choose the Quiz ID: ")
                 cursor.execute("SELECT q_name FROM Quiz WHERE q_id = %s", (quiz_id,))  # Pulling out the old name using the Quiz ID
                 old_name = ""
                 for i in cursor:
                     old_name = i
-                print("Is this the name you want to change:", old_name)
-                yn = input("y/n >>>")
-                if yn == "y":
+
+                print("Is this the name you want to change:", old_name)  # Making sure the correct database table gets altered
+                yn = input("y/n >>> ")
+                if yn == "y" or yn == 'yes':
                     new_name = input("\nNew quiz name: ")
 
                     cursor.execute("UPDATE Quiz SET q_name = %s WHERE q_id = %s", (new_name, quiz_id,))
                     db.commit()
                     print("Quiz name successfully changed")
                     break
+                else:
+                    pass
+
+        elif decision == 'alter questions bool':  # has_questions
+            while True:
+                quiz_id = input("Choose the Quiz ID: ")
+                cursor.execute("SELECT q_name FROM Quiz WHERE q_id = %s", (quiz_id,))
+                name = ""
+
+                for i in cursor:
+                    name = i[0]
+
+                print("Correct quiz name for alteration? Quiz name: ", name)
+                yn = input("y/n >>> ")
+                if yn == "y" or yn == 'yes':
+
+                    confirmation = input("\nSet this quiz to have ('true') or don't have ('false') questions: ")
+
+                    if confirmation == 'true' or confirmation == 'has' or confirmation == 'yes':
+                        has_q = True
+                    else:
+                        has_q = False
+
+                    cursor.execute("UPDATE Quiz SET has_questions = %s WHERE q_id = %s", (has_q, quiz_id,))
+                    db.commit()
+                    print("Question status successfully upgraded")
+                    print('\nQuiz stats:\n\n')
+                    cursor.execute("SELECT * FROM Quiz WHERE q_id = %s", (quiz_id,))
+                    for i in cursor:
+                        print(i)
+                    break
+
+                else:
+                    pass
+
+        elif decision == 'alter answers bool':  # has_answers
+            while True:
+                quiz_id = input("Choose the Quiz ID: ")
+                cursor.execute("SELECT q_name FROM Quiz WHERE q_id = %s", (quiz_id,))
+                name = ""
+
+                for i in cursor:
+                    name = i[0]
+
+                print("Correct quiz name for alteration? Quiz name: ", name)
+                yn = input("y/n >>> ")
+                if yn == "y" or yn == 'yes':
+
+                    confirmation = input("\nSet this quiz to have ('true') or don't have ('false') answers: ")
+
+                    if confirmation == 'true' or confirmation == 'has' or confirmation == 'yes':
+                        has_a = True
+                    else:
+                        has_a = False
+
+                    cursor.execute("UPDATE Quiz SET has_answers = %s WHERE q_id = %s", (has_a, quiz_id,))
+                    db.commit()
+                    print("Answer status successfully upgraded")
+                    print('\nQuiz stats:\n\n')
+                    cursor.execute("SELECT * FROM Quiz WHERE q_id = %s", (quiz_id,))
+                    for i in cursor:
+                        print(i)
+                    break
+
+                else:
+                    pass
+            break
+
+        elif decision == 'alter username':
+            #  This part is put here in order to prevent unwanted change of username by a third party
+            cursor.execute("SELECT * FROM Accounts WHERE is_logged = 1")
+            acc_id = 0
+            for info in cursor:
+                print("Logged in as:", info[1], "(ID:", str(info[0]) + ")")
+                acc_id = info[0]
+
+            while True:
+                cursor.execute("SELECT username FROM Accounts WHERE ID = %s", (acc_id,))  # Pulling out the old username using the Account ID
+                old_un = ""
+                for i in cursor:
+                    old_un = i
+
+                print("Is this the name you want to change:", old_un)  # Making sure the correct database table gets altered
+                yn = input("y/n >>> ")
+                if yn == "y" or yn == 'yes':
+                    new_un = input("\nNew username: ")
+
+                    cursor.execute("UPDATE Accounts SET username = %s WHERE ID = %s", (new_un, acc_id,))
+                    db.commit()
+                    print("Username successfully changed")
+                    break
+                else:
+                    pass
+
+        elif decision == "exit" or decision == "close" or decision == "quit":
             break
 
 
